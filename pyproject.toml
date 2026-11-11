@@ -1,0 +1,27 @@
+[project]
+name = "webapp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "ajaysankar2611-dev", email = "ajaysankar2611@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20.1",
+    "argon2-cffi>=25.1.0",
+    "asyncpg>=0.32.0",
+    "fastapi>=0.162.0",
+    "pydantic-settings>=2.16.2",
+    "pydantic[email]>=2.14.2",
+    "pyjwt>=2.15.1",
+    "sqlalchemy[asyncio]>=2.1.8",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+webapp = "webapp:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
