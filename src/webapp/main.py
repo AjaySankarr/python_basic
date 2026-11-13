@@ -6,7 +6,11 @@ from fastapi.openapi.docs import get_swagger_ui_html  # <--- 1. Import this
 import webapp.models
 from webapp.api.v1.router import api_router
 from webapp.core.database import Base, engine
+from webapp.core.rate_limiter import limiter
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded 
+from slowapi.middleware import SlowAPIMiddleware
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -27,6 +31,13 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=None,
 )
+
+# Rate Limiting Configuration
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,_rate_limit_exceeded_handler
+)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +22,8 @@ from webapp.schemas.user import (
     UserLogin,
     UserOut,
 )
+from webapp.core.rate_limiter import limiter
+
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -174,5 +176,6 @@ async def logout_user(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/me", response_model=UserOut)
-async def get_me(current_user: User = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def get_me( request: Request, response:Response,current_user: User = Depends(get_current_user)):
     return current_user
