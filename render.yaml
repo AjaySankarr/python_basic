@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: college-management-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: college-db
+          property: connectionString
+      - key: REDIS_URL
+        value: memory://
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: "HS256"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "15"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: MAIL_SERVER
+        value: "smtp.gmail.com"
+      - key: MAIL_PORT
+        value: "587"
+
+databases:
+  - name: college-db
+    plan: free
+    databaseName: college_db
+    user: college_user
+
