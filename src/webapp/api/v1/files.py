@@ -9,6 +9,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from webapp.api.deps import get_current_user
 from webapp.models.user import User
 
+from collections.abc import AsyncIterator
+
+from fastapi.responses import StreamingResponse
+
 
 router = APIRouter(prefix="/files", tags=["File Upload"])
 
@@ -144,6 +148,70 @@ async def upload_multiple_files(
         "uploaded_by": current_user.id,
         "files": uploaded_files,
     }
+
+CHUNK_SIZE = 1024 * 1024  # 1 MB
+
+async def file_chunk_generator(
+    file_path: Path,
+) -> AsyncIterator[bytes]:
+
+    async with aiofiles.open(file_path, "rb") as file:
+
+        while chunk := await file.read(CHUNK_SIZE):
+
+            yield chunk
+
+@router.get("/download/{stored_filename}")
+async def download_file(
+    stored_filename: str,
+    # current_user: User = Depends(get_current_user),
+):
+
+    # 1. Validate filename
+    allowed_extensions = {
+        ".jpg", ".jpeg", ".png", ".pdf"
+    }
+
+    extension = Path(stored_filename).suffix.lower()
+
+    if (
+        Path(stored_filename).name != stored_filename
+        or extension not in allowed_extensions
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid filename",
+        )
+
+    # 2. Find the file
+    file_path = UPLOAD_DIR / stored_filename
+
+    if not file_path.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="File not found",
+        )
+
+    # 3. Determine content type
+    media_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".pdf": "application/pdf",
+    }
+
+    media_type = media_types[extension]
+
+    # 4. Return streaming response
+    return StreamingResponse(
+        file_chunk_generator(file_path),
+        media_type=media_type,
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{stored_filename}"'
+            )
+        },
+    )
 
 
 
